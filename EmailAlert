@@ -1,0 +1,77 @@
+# Create an Action Group for Email Notifications 
+
+resource "azurerm_monitor_action_group" "cpu_alert_action_group" { 
+
+  name                = "${random_pet.resource_prefix.id}-action-group" 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  short_name          = "cpualert" 
+
+  
+
+  email_receiver { 
+
+    name          = "cpu_alert_email" 
+
+    email_address = "your-email@example.com"  # Replace with your email address 
+
+    use_common_alert_schema = true 
+
+  } 
+
+} 
+
+ 
+
+# Create an Alert Rule for CPU Usage Exceeding 80% 
+
+resource "azurerm_monitor_metric_alert" "cpu_alert_rule" { 
+
+  name                = "${random_pet.resource_prefix.id}-cpu-alert" 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  scopes              = [azurerm_linux_virtual_machine.web_vm.id] 
+
+  description         = "Alert when CPU exceeds 80%" 
+
+  severity            = 2  # 0 (Critical) to 4 (Informational) 
+
+  frequency           = "PT5M"  # Check every 5 minutes 
+
+  window_size         = "PT5M"  # Consider 5 minutes of data 
+
+  
+
+  criteria { 
+
+    metric_namespace = "Microsoft.Compute/virtualMachines" 
+
+    metric_name      = "Percentage CPU" 
+
+    aggregation      = "Average" 
+
+    operator         = "GreaterThan" 
+
+    threshold        = 80  # Trigger when CPU exceeds 80% 
+
+  } 
+
+  
+
+  action { 
+
+    action_group_id = azurerm_monitor_action_group.cpu_alert_action_group.id 
+
+  } 
+
+  
+
+  tags = { 
+
+    environment = "production" 
+
+  } 
+
+} 
