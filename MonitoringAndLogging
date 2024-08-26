@@ -1,0 +1,115 @@
+# Create a Log Analytics Workspace 
+
+resource "azurerm_log_analytics_workspace" "log_workspace" { 
+
+  name                = "${random_pet.resource_prefix.id}-log-analytics" 
+
+  location            = azurerm_resource_group.core_group.location 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  sku                 = "PerGB2018" 
+
+  retention_in_days   = 30 
+
+} 
+
+ 
+
+# Enable VM Insights on the Virtual Machine 
+
+resource "azurerm_monitor_diagnostic_setting" "vm_diagnostic" { 
+
+  name               = "${random_pet.resource_prefix.id}-diag" 
+
+  target_resource_id = azurerm_linux_virtual_machine.web_vm.id 
+
+  
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.log_workspace.id 
+
+  
+
+  # Enable logs for monitoring the VM 
+
+  log { 
+
+    category = "GuestOS" 
+
+    enabled  = true 
+
+  
+
+    retention_policy { 
+
+      enabled = true 
+
+      days    = 7 
+
+    } 
+
+  } 
+
+  
+
+  metric { 
+
+    category = "GuestOS" 
+
+    enabled  = true 
+
+  
+
+    retention_policy { 
+
+      enabled = true 
+
+      days    = 7 
+
+    } 
+
+  } 
+
+} 
+
+ 
+
+# Install the Azure Monitor Agent on the VM 
+
+resource "azurerm_virtual_machine_extension" "monitoring_agent" { 
+
+  name                 = "${random_pet.resource_prefix.id}-monitoring-agent" 
+
+  virtual_machine_id   = azurerm_linux_virtual_machine.web_vm.id 
+
+  publisher            = "Microsoft.Azure.Monitor" 
+
+  type                 = "DependencyAgentLinux" 
+
+  type_handler_version = "9.10" 
+
+  
+
+  settings = <<SETTINGS 
+
+    { 
+
+      "workspaceId": "${azurerm_log_analytics_workspace.log_workspace.workspace_id}" 
+
+    } 
+
+  SETTINGS 
+
+  
+
+  protected_settings = <<PROTECTED_SETTINGS 
+
+    { 
+
+      "workspaceKey": "${azurerm_log_analytics_workspace.log_workspace.primary_shared_key}" 
+
+    } 
+
+  PROTECTED_SETTINGS 
+
+} 
