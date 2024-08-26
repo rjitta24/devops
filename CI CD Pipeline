@@ -1,0 +1,91 @@
+#Define a build pipeline 
+
+Create a azure-pipelines.yml file in your git repo 
+ 
+trigger: 
+
+  branches: 
+
+    include: 
+
+      - main  # Trigger builds on the 'main' branch 
+
+  
+
+pool: 
+
+  vmImage: 'ubuntu-latest' 
+
+  
+
+steps: 
+
+- task: UsePythonVersion@0 
+
+  inputs: 
+
+    versionSpec: '3.x' 
+
+    addToPath: true 
+
+  
+
+- script: | 
+
+    python -m pip install --upgrade pip 
+
+    pip install -r requirements.txt 
+
+  displayName: 'Install dependencies' 
+
+  
+
+- script: | 
+
+    python -m unittest discover 
+
+  displayName: 'Run tests' 
+
+  
+
+- task: CopyFiles@2 
+
+  inputs: 
+
+    contents: '**' 
+
+    targetFolder: '$(Build.ArtifactStagingDirectory)' 
+
+  displayName: 'Copy files to: $(Build.ArtifactStagingDirectory)' 
+
+  
+
+- task: PublishBuildArtifacts@1 
+
+  inputs: 
+
+    pathToPublish: '$(Build.ArtifactStagingDirectory)' 
+
+    artifactName: 'drop' 
+
+  displayName: 'Publish Artifact: drop' 
+
+ 
+
+Run the above pipeline on azure devops 
+
+ 
+
+#Define a release pipeline 
+
+ 
+
+Define Deployment in the release pipeline and add an artifact by linking it to the build pipeline you created earlier 
+
+ 
+
+Configure the deployment stage and add an SSH task with steps required to deploy the app. 
+
+ 
+
+Create an SSH connection by providing details of your VM and run the release pipeline  
