@@ -1,0 +1,127 @@
+# Create a Public IP Address for the VM 
+
+resource "azurerm_public_ip" "vm_public_ip" { 
+
+  name                = "${random_pet.resource_prefix.id}-public-ip" 
+
+  location            = azurerm_resource_group.core_group.location 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  allocation_method   = "Dynamic" 
+
+} 
+
+ 
+
+# Create a Network Interface for the VM 
+
+resource "azurerm_network_interface" "vm_nic" { 
+
+  name                = "${random_pet.resource_prefix.id}-nic" 
+
+  location            = azurerm_resource_group.core_group.location 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  
+
+  ip_configuration { 
+
+    name                          = "internal" 
+
+    subnet_id                     = azurerm_subnet.primary_subnet.id 
+
+    private_ip_address_allocation = "Dynamic" 
+
+    public_ip_address_id          = azurerm_public_ip.vm_public_ip.id 
+
+  } 
+
+} 
+
+ 
+
+# Create the Virtual Machine with Apache installed 
+
+resource "azurerm_linux_virtual_machine" "web_vm" { 
+
+  name                = "${random_pet.resource_prefix.id}-vm" 
+
+  location            = azurerm_resource_group.core_group.location 
+
+  resource_group_name = azurerm_resource_group.core_group.name 
+
+  network_interface_ids = [azurerm_network_interface.vm_nic.id] 
+
+  size                = "Standard_B1s" # VM Size 
+
+  
+
+  os_disk { 
+
+    caching              = "ReadWrite" 
+
+    storage_account_type = "Standard_LRS" 
+
+    name                 = "${random_pet.resource_prefix.id}-osdisk" 
+
+  } 
+
+  
+
+  source_image_reference { 
+
+    publisher = "Canonical" 
+
+    offer     = "UbuntuServer" 
+
+    sku       = "18.04-LTS" 
+
+    version   = "latest" 
+
+  } 
+
+  
+
+  admin_username = "azureuser" 
+
+  
+
+  # You can use SSH key authentication or password authentication 
+
+  admin_ssh_key { 
+
+    username   = "azureuser" 
+
+    public_key = file("~/.ssh/id_rsa.pub") 
+
+  } 
+
+  
+
+  # Use a cloud-init script to install Apache 
+
+  custom_data = <<-EOF 
+
+              #!/bin/bash 
+
+              sudo apt-get update -y 
+
+              sudo apt-get install -y apache2 
+
+              sudo systemctl enable apache2 
+
+              sudo systemctl start apache2 
+
+              EOF 
+
+  
+
+  tags = { 
+
+    environment = "development" 
+
+  } 
+
+} 
