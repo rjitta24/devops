@@ -42,6 +42,37 @@ resource "azurerm_public_ip" "vm_public_ip" {
   allocation_method   = "Dynamic" 
 } 
 
+# Create a Network Security Group (NSG)
+resource "azurerm_network_security_group" "vm_nsg" {
+  name                = "${random_pet.prefix.id}-nsg"
+  location            = azurerm_resource_group.main_rg.location
+  resource_group_name = azurerm_resource_group.main_rg.name
+
+  security_rule {
+    name                       = "Allow-HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow-HTTPS"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
 # Create a Network Interface for the VM 
 resource "azurerm_network_interface" "vm_nic" { 
   name                = "${random_pet.prefix.id}-nic" 
@@ -50,11 +81,17 @@ resource "azurerm_network_interface" "vm_nic" {
 
   ip_configuration { 
     name                          = "internal" 
-    subnet_id                     = azurerm_subnet.subnet_one.id # or subnet_two.id if needed
+    subnet_id                     = azurerm_subnet.subnet_one.id 
     private_ip_address_allocation = "Dynamic" 
     public_ip_address_id          = azurerm_public_ip.vm_public_ip.id 
   } 
-} 
+}
+
+# Associate the NSG with the Network Interface
+resource "azurerm_network_interface_security_group_association" "vm_nic_nsg" {
+  network_interface_id      = azurerm_network_interface.vm_nic.id
+  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+}
 
 # Create the Virtual Machine with Apache installed 
 resource "azurerm_linux_virtual_machine" "web_vm" { 
