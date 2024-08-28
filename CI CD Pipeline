@@ -72,7 +72,7 @@ steps:
 
  
 
-Run the above pipeline on azure devops 
+#Run the above pipeline on azure devops 
 
  
 
@@ -80,12 +80,12 @@ Run the above pipeline on azure devops
 
  
 
-Define Deployment in the release pipeline and add an artifact by linking it to the build pipeline you created earlier 
+#Define Deployment in the release pipeline and add an artifact by linking it to the build pipeline you created earlier 
 
  
 
-Configure the deployment stage and add an SSH task with steps required to deploy the app. 
+#Configure the deployment stage and add an SSH task with steps required to deploy the app. 
 
  
 
-Create an SSH connection by providing details of your VM and run the release pipeline  
+#Create an SSH connection by providing details of your VM and run the release pipeline  
